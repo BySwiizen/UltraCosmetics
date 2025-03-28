@@ -24,7 +24,13 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.*;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerItemDamageEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Arrays;
@@ -64,15 +70,19 @@ public class PlayerListener implements Listener {
     public void onJoin(final PlayerJoinEvent event) {
         UltraPlayer ultraPlayer = pm.getUltraPlayer(event.getPlayer());
         if (SettingsManager.isAllowedWorld(event.getPlayer().getWorld())) {
-            // Delay in case other plugins clear inventory on join
-            ultraCosmetics.getScheduler().runAtEntityLater(event.getPlayer(), () -> {
-                if (menuItemEnabled && event.getPlayer().hasPermission("ultracosmetics.receivechest")) {
-                    ultraPlayer.giveMenuItem();
-                }
-                if (UltraCosmeticsData.get().areCosmeticsProfilesEnabled()) {
-                    ultraPlayer.getProfile().onLoad(CosmeticsProfile::equip);
-                }
-            }, joinItemDelay);
+            // Delay two ticks because event.getPlayer().isValid() == false for some reason.
+            // Experimentally determined; one tick isn't enough sometimes.
+            ultraCosmetics.getScheduler().runLater(() -> {
+                // Delay in case other plugins clear inventory on join
+                ultraCosmetics.getScheduler().runAtEntityLater(event.getPlayer(), () -> {
+                    if (menuItemEnabled && event.getPlayer().hasPermission("ultracosmetics.receivechest")) {
+                        ultraPlayer.giveMenuItem();
+                    }
+                    if (UltraCosmeticsData.get().areCosmeticsProfilesEnabled()) {
+                        ultraPlayer.getProfile().onLoad(CosmeticsProfile::equip);
+                    }
+                }, Math.max(joinItemDelay - 2, 1));
+            }, 2);
         }
 
         if (ultraCosmetics.getUpdateChecker() != null && ultraCosmetics.getUpdateChecker().isOutdated()) {

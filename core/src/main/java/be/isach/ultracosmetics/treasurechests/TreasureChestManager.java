@@ -56,7 +56,7 @@ public class TreasureChestManager implements Listener {
             TreasureLocation tloc = new TreasureLocation(world, location.getInt("X", 0), location.getInt("Y", 63), location.getInt("Z", 0));
             TREASURE_LOCATIONS.add(tloc);
         }
-        if (TREASURE_LOCATIONS.size() == 0) {
+        if (TREASURE_LOCATIONS.isEmpty()) {
             ultraCosmetics.getSmartLogger().write(SmartLogger.LogLevel.WARNING, "No treasure chest locations are defined, the setting will be ignored");
         }
     }

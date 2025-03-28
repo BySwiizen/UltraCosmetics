@@ -46,7 +46,7 @@ public class PlayerBounceRunnable extends UltraTask {
 
     @Override
     public void schedule() {
-        task = getScheduler().runAtEntityTimer(ultraPlayer.getBukkitPlayer(), this::run, 0L, 1L);
+        task = getScheduler().runAtEntityTimer(ultraPlayer.getBukkitPlayer(), this::run, 5L, 1L);
     }
 
 }

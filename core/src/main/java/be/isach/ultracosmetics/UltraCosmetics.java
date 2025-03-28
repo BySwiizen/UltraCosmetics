@@ -1,24 +1,45 @@
 package be.isach.ultracosmetics;
 
 import be.isach.ultracosmetics.command.CommandManager;
-import be.isach.ultracosmetics.config.*;
+import be.isach.ultracosmetics.config.AutoCommentConfiguration;
+import be.isach.ultracosmetics.config.CustomConfiguration;
+import be.isach.ultracosmetics.config.FunctionalConfigLoader;
+import be.isach.ultracosmetics.config.ManualCommentConfiguration;
+import be.isach.ultracosmetics.config.MessageManager;
+import be.isach.ultracosmetics.config.SettingsManager;
 import be.isach.ultracosmetics.cosmetics.Category;
 import be.isach.ultracosmetics.cosmetics.type.CosmeticType;
 import be.isach.ultracosmetics.economy.EconomyHandler;
-import be.isach.ultracosmetics.hook.*;
-import be.isach.ultracosmetics.listeners.*;
+import be.isach.ultracosmetics.hook.ChestSortHook;
+import be.isach.ultracosmetics.hook.DiscordSRVHook;
+import be.isach.ultracosmetics.hook.PlaceholderHook;
+import be.isach.ultracosmetics.hook.PlayerAuctionsHook;
+import be.isach.ultracosmetics.hook.TownyHook;
+import be.isach.ultracosmetics.listeners.EntityDismountListener;
+import be.isach.ultracosmetics.listeners.MainListener;
+import be.isach.ultracosmetics.listeners.PlayerListener;
+import be.isach.ultracosmetics.listeners.PriorityListener;
+import be.isach.ultracosmetics.listeners.UnmovableItemListener;
 import be.isach.ultracosmetics.menu.CosmeticsInventoryHolder;
 import be.isach.ultracosmetics.menu.Menus;
 import be.isach.ultracosmetics.menu.menus.CustomMainMenu;
 import be.isach.ultracosmetics.mysql.MySqlConnectionManager;
+import be.isach.ultracosmetics.paper.DummyPaperSupport;
+import be.isach.ultracosmetics.paper.PaperSupport;
 import be.isach.ultracosmetics.permissions.PermissionManager;
 import be.isach.ultracosmetics.player.UltraPlayerManager;
 import be.isach.ultracosmetics.run.FallDamageManager;
 import be.isach.ultracosmetics.run.InvalidWorldChecker;
 import be.isach.ultracosmetics.run.VanishChecker;
 import be.isach.ultracosmetics.treasurechests.TreasureChestManager;
-import be.isach.ultracosmetics.util.*;
+import be.isach.ultracosmetics.util.EntitySpawningManager;
+import be.isach.ultracosmetics.util.InventoryViewHelper;
+import be.isach.ultracosmetics.util.PermissionPrinter;
+import be.isach.ultracosmetics.util.PlayerUtils;
+import be.isach.ultracosmetics.util.Problem;
+import be.isach.ultracosmetics.util.SmartLogger;
 import be.isach.ultracosmetics.util.SmartLogger.LogLevel;
+import be.isach.ultracosmetics.util.UpdateManager;
 import be.isach.ultracosmetics.version.ServerVersion;
 import be.isach.ultracosmetics.worldguard.WorldGuardManager;
 import com.cryptomorin.xseries.XMaterial;
@@ -40,10 +61,20 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
 import java.net.URL;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -60,7 +91,7 @@ public class UltraCosmetics extends JavaPlugin {
     /**
      * Instance of FoliaLib which allows plugin to work on Folia or Spigot/Paper.
      */
-    private FoliaLib foliaLib;
+    private final FoliaLib foliaLib;
 
     /**
      * Manages sub commands.
@@ -116,6 +147,7 @@ public class UltraCosmetics extends JavaPlugin {
     private UnmovableItemListener unmovableItemListener;
     private TreasureChestManager treasureChestManager;
     private EntityDismountListener entityDismountListener;
+    private PaperSupport paperSupport;
 
     /**
      * Manages WorldGuard flags.
@@ -286,6 +318,11 @@ public class UltraCosmetics extends JavaPlugin {
         // Register Listeners.
         registerListeners();
 
+        if (UltraCosmeticsData.get().getServerVersion().isAtLeast(ServerVersion.v1_20)) {
+            // Commodore didn't have a new enough version of ASM to load Java 21 classes until 1.20
+            loadPaperSupport();
+        }
+
         // Set up Cosmetics config.
         CosmeticType.loadCustomCosmetics();
         CosmeticType.registerAll();
@@ -389,6 +426,19 @@ public class UltraCosmetics extends JavaPlugin {
         getSmartLogger().write("UltraCosmetics successfully finished loading in " + (System.currentTimeMillis() - startTime) + "ms!");
         getSmartLogger().write("-------------------------------------------------------------------");
         enableFinished = true;
+    }
+
+    private void loadPaperSupport() {
+        try {
+            paperSupport = Class.forName("be.isach.ultracosmetics.paper.PaperSupportImpl").asSubclass(PaperSupport.class).getDeclaredConstructor().newInstance();
+            getSmartLogger().write("Paper-specific features enabled");
+        } catch (ReflectiveOperationException | UnsupportedClassVersionError | IllegalArgumentException e) {
+            // ReflectiveOperationException shouldn't happen
+            // UnsupportedClassVersionError is thrown when server is running on a version below Java 21
+            // IllegalArgumentException is also thrown when the server is running on a version below Java 21
+            // and CraftBukkit tries to process it.
+            paperSupport = new DummyPaperSupport();
+        }
     }
 
     /**
@@ -638,7 +688,7 @@ public class UltraCosmetics extends JavaPlugin {
         }
         if (!raw.contains("&")) return;
         MiniMessage mm = MessageManager.getMiniMessage();
-        LegacyComponentSerializer deserializer = LegacyComponentSerializer.legacyAmpersand();
+        LegacyComponentSerializer deserializer = MessageManager.legacySerializer();
         String[] parts = raw.split("\n");
         StringBuilder builder = new StringBuilder(mm.serialize(deserializer.deserialize(parts[0])));
         for (int i = 1; i < parts.length; i++) {
@@ -876,5 +926,9 @@ public class UltraCosmetics extends JavaPlugin {
         Set<Problem> severe = new HashSet<>(activeProblems);
         severe.removeIf(p -> !p.isSevere());
         return severe;
+    }
+
+    public PaperSupport getPaperSupport() {
+        return paperSupport;
     }
 }

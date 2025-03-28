@@ -508,7 +508,9 @@ public class UltraPlayer {
      * Gives the Menu Item.
      */
     public void giveMenuItem() {
-        if (!menuItemEnabled || getBukkitPlayer() == null) return;
+        if (!menuItemEnabled || getBukkitPlayer() == null) {
+            return;
+        }
         removeMenuItem();
         ConfigurationSection section = SettingsManager.getConfig().getConfigurationSection("Menu-Item");
         int slot = section.getInt("Slot");

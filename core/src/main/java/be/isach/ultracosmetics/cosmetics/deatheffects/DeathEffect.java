@@ -18,6 +18,7 @@ public abstract class DeathEffect extends Cosmetic<DeathEffectType> {
 
     @Override
     protected void onEquip() {
+        // Lightning and fireworks aren't really particles so we don't need to warn about disabled particles for now
     }
 
     @EventHandler

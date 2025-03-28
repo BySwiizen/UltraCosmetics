@@ -48,6 +48,8 @@ public class EconomyHandler {
             ultraCosmetics.getSmartLogger().write("Economy not specified in the config, disabling economy features.");
             return;
         }
+        loadDiscounts();
+
         currency = ultraCosmetics.getConfig().getString("Economy-Currency", "");
         if (currency.isEmpty()) currency = null;
 
@@ -64,12 +66,15 @@ public class EconomyHandler {
             ultraCosmetics.getSmartLogger().write("Economy plugin " + economy + " is unknown, waiting for it to register itself.");
             waitingForCustomEconomy = true;
         }
+    }
 
+    private void loadDiscounts() {
         ConfigurationSection section = SettingsManager.getConfig().getConfigurationSection("Discount-Groups");
         for (String key : section.getKeys(false)) {
             if (!section.isDouble(key)) continue;
             discounts.add(new Discount(key, section.getDouble(key)));
         }
+        Bukkit.getLogger().info("Loaded " + discounts.size() + " discount groups.");
         Collections.sort(discounts);
     }
 

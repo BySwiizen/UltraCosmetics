@@ -1,6 +1,7 @@
 package be.isach.ultracosmetics.cosmetics.particleeffects;
 
 import be.isach.ultracosmetics.UltraCosmetics;
+import be.isach.ultracosmetics.config.MessageManager;
 import be.isach.ultracosmetics.cosmetics.Cosmetic;
 import be.isach.ultracosmetics.cosmetics.Updatable;
 import be.isach.ultracosmetics.cosmetics.type.ParticleEffectType;
@@ -40,7 +41,7 @@ public abstract class ParticleEffect extends Cosmetic<ParticleEffectType> implem
     public ParticleEffect(UltraPlayer ultraPlayer, ParticleEffectType type, UltraCosmetics ultraCosmetics) {
         super(ultraPlayer, type, ultraCosmetics);
         display = ParticleDisplay.of(getType().getEffect());
-        alternativeEffect = display.clone()
+        alternativeEffect = display.copy()
                 .offset(0.2)
                 .withCount(getModifiedAmount(3))
                 .withLocationCaller(() -> getPlayer().getLocation().add(0, 0.2, 0));
@@ -48,6 +49,9 @@ public abstract class ParticleEffect extends Cosmetic<ParticleEffectType> implem
 
     @Override
     protected void onEquip() {
+        if (getUltraCosmetics().getPaperSupport().hasParticlesDisabled(getPlayer())) {
+            MessageManager.send(getPlayer(), "Particles-Minimal-In-Client");
+        }
     }
 
     @Override

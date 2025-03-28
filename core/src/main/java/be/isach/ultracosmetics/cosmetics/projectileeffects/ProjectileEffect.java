@@ -1,6 +1,7 @@
 package be.isach.ultracosmetics.cosmetics.projectileeffects;
 
 import be.isach.ultracosmetics.UltraCosmetics;
+import be.isach.ultracosmetics.config.MessageManager;
 import be.isach.ultracosmetics.config.SettingsManager;
 import be.isach.ultracosmetics.cosmetics.Cosmetic;
 import be.isach.ultracosmetics.cosmetics.Updatable;
@@ -13,8 +14,13 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public abstract class ProjectileEffect extends Cosmetic<ProjectileEffectType> implements Updatable {
     private final Map<Projectile, Location> projectiles = new HashMap<>();
@@ -34,7 +40,9 @@ public abstract class ProjectileEffect extends Cosmetic<ProjectileEffectType> im
 
     @Override
     protected void onEquip() {
-
+        if (getUltraCosmetics().getPaperSupport().hasParticlesDisabled(getPlayer())) {
+            MessageManager.send(getPlayer(), "Particles-Minimal-In-Client");
+        }
     }
 
     @Override

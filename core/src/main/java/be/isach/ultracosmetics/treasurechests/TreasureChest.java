@@ -20,7 +20,11 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Lidded;
-import org.bukkit.entity.*;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Item;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
@@ -33,7 +37,11 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.util.Vector;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 public class TreasureChest implements Listener {
 
@@ -81,8 +89,10 @@ public class TreasureChest implements Listener {
         Bukkit.getPluginManager().registerEvents(this, uc);
 
         this.player = getPlayer();
+        // Async teleport requires we check the treasure location if it's present
+        Location playerLoc = destLoc == null ? player.getLocation() : destLoc.toLocation(player);
 
-        centerBlock = player.getLocation().getBlock();
+        centerBlock = playerLoc.getBlock();
         center = centerBlock.getLocation();
         rollback = new StructureRollback(new Area(center.clone().subtract(0, 1, 0), large ? 3 : 2, 3));
         if (!BlockUtils.isAir(centerBlock.getType())) {

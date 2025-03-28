@@ -10,7 +10,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
-import java.awt.*;
+import java.awt.Color;
 
 public class ChestParticleRunnable extends UltraTask {
     private static final Vector Y_AXIS = new Vector(0, 1, 0);
@@ -115,13 +115,13 @@ public class ChestParticleRunnable extends UltraTask {
         final double inc = (2 * Math.PI) / 50;
         final Location location = loc.clone().add(0, 3, 0);
 
-        UltraCosmeticsData.get().getPlugin().getScheduler().runAtEntityTimer(chest.getPlayer(), (task) -> {
+        UltraCosmeticsData.get().getPlugin().getScheduler().runAtEntityTimer(chest.getPlayer(), task -> {
             double angle = step[0] * inc + offset;
             Vector v = new Vector(Math.cos(angle), 0, Math.sin(angle)).multiply(radius[0]);
             display.spawn(location);
             location.subtract(v).subtract(0, 0.1d, 0);
             if (location.getY() <= y) {
-                cancel();
+                task.cancel();
             }
             step[0] += 4;
             radius[0] += 1 / 50f;

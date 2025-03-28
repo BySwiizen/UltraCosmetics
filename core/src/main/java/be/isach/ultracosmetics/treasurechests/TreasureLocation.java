@@ -11,6 +11,7 @@ public class TreasureLocation {
     private final double x;
     private final double y;
     private final double z;
+
     public TreasureLocation(World world, int x, int y, int z) {
         this.world = world;
         this.x = x;

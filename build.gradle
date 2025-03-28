@@ -12,7 +12,7 @@ allprojects {
     idea.module.downloadSources = true
 
     group = 'be.isach.UltraCosmetics'
-    version = '3.10-RELEASE'
+    version = '3.10.1-RELEASE'
 
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
@@ -111,6 +111,8 @@ subprojects { subproj ->
         maven { url = 'https://repo.olziedev.com/' }
         // Vault, PEconomy, MobChipLite, FoliaLib
         maven { url = 'https://jitpack.io' }
+        // Paper API
+        maven { url = 'https://repo.papermc.io/repository/maven-public/' }
         // Mojang Authlib
         maven { url = 'https://libraries.minecraft.net' }
     }
